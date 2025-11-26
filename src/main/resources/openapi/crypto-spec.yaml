@@ -1,0 +1,227 @@
+openapi: 3.0.3
+info:
+  title: Crypto Recommendation Service API
+  version: 1.0.0
+  description: API for crypto statistics and recommendations
+
+paths:
+  /normalized-range:
+    get:
+      tags:
+        - crypto
+      summary: Get all cryptos sorted by normalized range
+      description: Returns a descending sorted list of all cryptos, comparing the normalized range ((max-min)/min) for the specified time range.
+      parameters:
+        - name: from
+          in: query
+          description: Start date (yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date (yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of cryptos sorted by normalized range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoNormalizedRangeListResponse'
+        '400':
+          description: Bad request (invalid parameters or date format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable (server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{symbol}/statistics:
+    get:
+      tags:
+        - crypto
+      summary: Get statistics for a specific crypto
+      description: Returns oldest, newest, min, and max values for the requested crypto within the specified time range.
+      parameters:
+        - name: symbol
+          in: path
+          description: Crypto symbol
+          required: true
+          schema:
+            $ref: '#/components/schemas/CryptoSymbol'
+        - name: from
+          in: query
+          description: Start date (yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date (yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Statistics for the requested crypto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoStatisticsResponse'
+        '400':
+          description: Bad request (invalid parameters or date format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Crypto not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable (server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /highest-normalized-range:
+    get:
+      tags:
+        - crypto
+      summary: Get crypto with highest normalized range for a specific day
+      description: Returns the crypto with the highest normalized range for the specified day and optional time range. For data only for one day start and end dates should be the same
+      parameters:
+        - name: from
+          in: query
+          description: Start date (yyyy-MM-dd)
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date (yyyy-MM-dd)
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Crypto with highest normalized range for the day
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CryptoNormalizedRangeResponse'
+        '400':
+          description: Bad request (invalid parameters or date format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No crypto found for the specified day
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable (server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CryptoSymbol:
+      type: string
+      description: Supported crypto symbols
+      enum:
+        - BTC
+        - DOGE
+        - ETH
+        - LTC
+        - XRP
+      example: BTC
+
+    CryptoNormalizedRangeDto:
+      type: object
+      properties:
+        symbol:
+          $ref: '#/components/schemas/CryptoSymbol'
+        normalizedRange:
+          type: number
+          format: double
+          example: 0.15
+
+    CryptoStatisticsDto:
+      type: object
+      properties:
+        symbol:
+          $ref: '#/components/schemas/CryptoSymbol'
+        oldestPrice:
+          type: number
+          format: double
+          example: 46813.21
+        newestPrice:
+          type: number
+          format: double
+          example: 47200.00
+        minPrice:
+          type: number
+          format: double
+          example: 45000.00
+        maxPrice:
+          type: number
+          format: double
+          example: 48000.00
+
+    CryptoNormalizedRangeListResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            values:
+              type: array
+              items:
+                $ref: '#/components/schemas/CryptoNormalizedRangeDto'
+    CryptoStatisticsResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CryptoStatisticsDto'
+
+    CryptoNormalizedRangeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/CryptoNormalizedRangeDto'
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-24T12:34:56Z"
+        message:
+          type: array
+          items:
+            type: string
+            example: "Invalid date format"

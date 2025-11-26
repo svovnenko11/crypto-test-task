@@ -1,0 +1,96 @@
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.0.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id "org.openapi.generator" version '6.6.0'
+}
+
+//java {
+//	sourceCompatibility = JavaVersion.VERSION_17
+//	targetCompatibility = JavaVersion.VERSION_17
+//}
+
+sourceSets.main.java.srcDirs += "$buildDir/generated/src/main/java"
+
+group = 'com.svovnenko'
+version = '0.0.1-SNAPSHOT'
+description = 'Crypto Recommendations Service Test Task '
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	runtimeOnly 'com.h2database:h2'
+	implementation 'org.apache.commons:commons-csv:1.10.0'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+
+	implementation 'org.openapitools:jackson-databind-nullable:0.2.4'
+	implementation 'io.swagger.core.v3:swagger-annotations:2.2.12'
+
+	compileOnly 'org.projectlombok:lombok:1.18.30'
+	annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+	annotationProcessor "org.mapstruct:mapstruct-processor:1.5.5.Final"
+	implementation "org.mapstruct:mapstruct:1.5.5.Final"
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+task openApiGenerateServer(type: GenerateTask){
+generatorName = "spring"
+	library = "spring-boot"
+	inputSpec = "$projectDir/src/main/resources/openapi/crypto-spec.yaml"
+	outputDir = "$buildDir/generated/openapi/server"
+	modelNameSuffix = "Dto"
+	apiPackage = "com.svovnenko.crypto.controller"
+	modelPackage = "com.svovnenko.crypto.domain.dto"
+	configOptions = [
+			generatedConstructorWithRequiredArgs: "false",
+			interfaceOnly                       : "true",
+			useSpringController                 : "true",
+			useTags                             : "true",
+			dateLibrary                         : "java8",
+			skipDefaultInterface                : "true",
+			useResponseEntity                   : "true",
+			useSpringBoot3                      : "true",
+			additionalModelTypeAnnotations      :
+					"""@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)""",
+			imports                             : "java.time.Instant"
+
+	]
+	typeMappings = [
+			OffsetDateTime: "Instant"
+	]
+	importMappings = [
+			"java.time.OffsetDateTime": "java.time.Instant"
+	]
+
+	doLast {
+		copy {
+			from "$buildDir/generated/openapi/server/src/main/java"
+			into "$buildDir/generated/src/main/java"
+		}
+		delete fileTree("$projectDir/build/classes/java/main") {
+			include '**/rest/api/ApiUtil.java'
+		}
+	}
+
+	tasks.compileJava.dependsOn it
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
