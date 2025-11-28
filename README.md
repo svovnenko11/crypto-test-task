@@ -62,3 +62,7 @@ setup container
 
 3) Use application with provided postman collection
 
+#### Possible issues
+Temp solution for test task. if you have issues with **org.openapi.generator** that generates APIs - 
+use **feature/not-generated-api** branch in which all generated files moved into src. There will be no only generation, but all generated files will be there
+
