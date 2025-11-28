@@ -48,6 +48,9 @@ Also 10 request per minute is now hardcoded in filter class, better to move to a
 4) Now all data aggregation for response is on DB query level - it can cause performance issues potentially.
 
 
+### Setup
+* JDK 17
+
 ### How to run
 1) Build project gradlew clean build
 > gradlew clean build
